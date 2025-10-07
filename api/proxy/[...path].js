@@ -15,7 +15,9 @@ export default async function handler(req, res) {
 
   // Map known app endpoints to real backend endpoints
   const url = new URL(req.url, `http://${req.headers.host}`);
-  const pathname = url.pathname.replace(/^\/api/, '');
+  // Normalize pathname by removing the serverless mount prefix
+  const stripped = url.pathname.replace(/^\/api(?:\/proxy)?/, '');
+  const pathname = stripped.startsWith('/') ? stripped : `/${stripped}`;
   const search = url.search || '';
   const searchParams = url.searchParams;
 
