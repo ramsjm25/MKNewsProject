@@ -10,24 +10,45 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { type } = req.query;
   const baseUrl = 'https://phpstack-1520234-5847937.cloudwaysapps.com/api/v1';
-  
-  let targetUrl;
-  if (type === 'languages') {
-    targetUrl = `${baseUrl}/news/languages`;
-  } else if (type === 'categories') {
-    targetUrl = `${baseUrl}/news/categories`;
-  } else if (type === 'states') {
-    targetUrl = `${baseUrl}/news/states`;
-  } else if (type === 'districts') {
-    targetUrl = `${baseUrl}/news/districts`;
-  } else if (type === 'category-keywords') {
-    targetUrl = `${baseUrl}/news/category-keywords`;
-  } else if (type === 'urgency-patterns') {
-    targetUrl = `${baseUrl}/news/urgency-patterns`;
+
+  // Map known app endpoints to real backend endpoints
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const pathname = url.pathname.replace(/^\/api/, '');
+  const search = url.search || '';
+
+  let targetUrl = baseUrl;
+
+  // Handle explicit endpoints
+  if (pathname.startsWith('/data')) {
+    // e.g. /api/data?type=languages
+    const type = url.searchParams.get('type');
+    if (type === 'languages') targetUrl = `${baseUrl}/news/languages`;
+    else if (type === 'categories') targetUrl = `${baseUrl}/news/categories${search.replace('?type=categories', '')}`;
+    else if (type === 'states') targetUrl = `${baseUrl}/news/states${search.replace('?type=states', '')}`;
+    else if (type === 'districts') targetUrl = `${baseUrl}/news/districts${search.replace('?type=districts', '')}`;
+    else if (type === 'category-keywords') targetUrl = `${baseUrl}/news/category-keywords`;
+    else if (type === 'urgency-patterns') targetUrl = `${baseUrl}/news/urgency-patterns`;
+    else targetUrl = `${baseUrl}${pathname}${search}`;
+  } else if (pathname.startsWith('/local-mandi-categories')) {
+    targetUrl = `${baseUrl}/local-mandi-categories${search}`;
+  } else if (pathname.startsWith('/e-newspapers')) {
+    targetUrl = `${baseUrl}/e-newspapers${search}`;
+  } else if (pathname.startsWith('/news')) {
+    targetUrl = `${baseUrl}${pathname}${search}`;
+  } else if (pathname.startsWith('/api')) {
+    // Legacy: /api?type=languages
+    const type = url.searchParams.get('type');
+    if (type === 'languages') targetUrl = `${baseUrl}/news/languages`;
+    else if (type === 'categories') targetUrl = `${baseUrl}/news/categories${search.replace('?type=categories', '')}`;
+    else if (type === 'states') targetUrl = `${baseUrl}/news/states${search.replace('?type=states', '')}`;
+    else if (type === 'districts') targetUrl = `${baseUrl}/news/districts${search.replace('?type=districts', '')}`;
+    else if (type === 'category-keywords') targetUrl = `${baseUrl}/news/category-keywords`;
+    else if (type === 'urgency-patterns') targetUrl = `${baseUrl}/news/urgency-patterns`;
+    else targetUrl = `${baseUrl}${pathname}${search}`;
   } else {
-    targetUrl = `${baseUrl}/api?type=${type}`;
+    // Pass-through for any other paths
+    targetUrl = `${baseUrl}${pathname}${search}`;
   }
 
   try {
