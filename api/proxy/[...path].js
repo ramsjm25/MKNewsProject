@@ -3,6 +3,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -16,17 +17,26 @@ export default async function handler(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const pathname = url.pathname.replace(/^\/api/, '');
   const search = url.search || '';
+  const searchParams = url.searchParams;
+
+  // Helper: remove `type` param but keep others intact
+  const buildSearchWithoutType = () => {
+    const sp = new URLSearchParams(searchParams);
+    sp.delete('type');
+    const s = sp.toString();
+    return s ? `?${s}` : '';
+  };
 
   let targetUrl = baseUrl;
 
   // Handle explicit endpoints
   if (pathname.startsWith('/data')) {
     // e.g. /api/data?type=languages
-    const type = url.searchParams.get('type');
+    const type = searchParams.get('type');
     if (type === 'languages') targetUrl = `${baseUrl}/news/languages`;
-    else if (type === 'categories') targetUrl = `${baseUrl}/news/categories${search.replace('?type=categories', '')}`;
-    else if (type === 'states') targetUrl = `${baseUrl}/news/states${search.replace('?type=states', '')}`;
-    else if (type === 'districts') targetUrl = `${baseUrl}/news/districts${search.replace('?type=districts', '')}`;
+    else if (type === 'categories') targetUrl = `${baseUrl}/news/categories${buildSearchWithoutType()}`;
+    else if (type === 'states') targetUrl = `${baseUrl}/news/states${buildSearchWithoutType()}`;
+    else if (type === 'districts') targetUrl = `${baseUrl}/news/districts${buildSearchWithoutType()}`;
     else if (type === 'category-keywords') targetUrl = `${baseUrl}/news/category-keywords`;
     else if (type === 'urgency-patterns') targetUrl = `${baseUrl}/news/urgency-patterns`;
     else targetUrl = `${baseUrl}${pathname}${search}`;
@@ -36,13 +46,13 @@ export default async function handler(req, res) {
     targetUrl = `${baseUrl}/e-newspapers${search}`;
   } else if (pathname.startsWith('/news')) {
     targetUrl = `${baseUrl}${pathname}${search}`;
-  } else if (pathname.startsWith('/api')) {
+  } else if (pathname.startsWith('/api') || pathname === '' || pathname === '/') {
     // Legacy: /api?type=languages
-    const type = url.searchParams.get('type');
+    const type = searchParams.get('type');
     if (type === 'languages') targetUrl = `${baseUrl}/news/languages`;
-    else if (type === 'categories') targetUrl = `${baseUrl}/news/categories${search.replace('?type=categories', '')}`;
-    else if (type === 'states') targetUrl = `${baseUrl}/news/states${search.replace('?type=states', '')}`;
-    else if (type === 'districts') targetUrl = `${baseUrl}/news/districts${search.replace('?type=districts', '')}`;
+    else if (type === 'categories') targetUrl = `${baseUrl}/news/categories${buildSearchWithoutType()}`;
+    else if (type === 'states') targetUrl = `${baseUrl}/news/states${buildSearchWithoutType()}`;
+    else if (type === 'districts') targetUrl = `${baseUrl}/news/districts${buildSearchWithoutType()}`;
     else if (type === 'category-keywords') targetUrl = `${baseUrl}/news/category-keywords`;
     else if (type === 'urgency-patterns') targetUrl = `${baseUrl}/news/urgency-patterns`;
     else targetUrl = `${baseUrl}${pathname}${search}`;
