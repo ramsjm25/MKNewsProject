@@ -114,12 +114,8 @@ const API_BASE_URL =
 
 // Determine the base URL based on environment
 const getBaseURL = () => {
-  // In development, use the proxy
-  if (import.meta.env.DEV) {
-    return "/api";
-  }
-  // In production, use the direct API URL
-  return API_BASE_URL;
+  // Always use the Vercel proxy to avoid CORS issues
+  return "/api";
 };
 
 // Create a centralized API client
