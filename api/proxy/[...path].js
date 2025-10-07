@@ -64,13 +64,29 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(targetUrl, {
-      method: req.method,
+    // Some backend endpoints expect POST with JSON instead of GET with query
+    let forwardMethod = req.method;
+    let forwardBody;
+    let forwardUrl = targetUrl;
+
+    if (pathname === '/news/filter-advanced' && req.method === 'GET') {
+      // Convert query params to JSON body and use POST
+      const qp = Object.fromEntries(searchParams.entries());
+      forwardMethod = 'POST';
+      forwardBody = JSON.stringify(qp);
+      // Remove query string when sending POST
+      forwardUrl = targetUrl.split('?')[0];
+    } else {
+      forwardBody = req.method !== 'GET' ? JSON.stringify(req.body) : undefined;
+    }
+
+    const response = await fetch(forwardUrl, {
+      method: forwardMethod,
       headers: {
         'Content-Type': 'application/json',
         ...req.headers
       },
-      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined
+      body: forwardBody
     });
 
     const data = await response.json();
