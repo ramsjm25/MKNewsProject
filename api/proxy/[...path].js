@@ -70,10 +70,24 @@ export default async function handler(req, res) {
     let forwardUrl = targetUrl;
 
     if (pathname === '/news/filter-advanced' && req.method === 'GET') {
-      // Convert query params to JSON body and use POST
+      // Convert query params to JSON body and use POST (backend expects POST)
       const qp = Object.fromEntries(searchParams.entries());
+      const categoryId = qp.categoryId || qp.category_id || qp.category_ids;
+      const categoryIdsArray = categoryId ? String(categoryId).split(',').map(s => s.trim()).filter(Boolean) : [];
+      const payload = {
+        language_id: qp.language_id || null,
+        state_id: qp.state_id || null,
+        district_id: qp.district_id || null,
+        page: qp.page ? Number(qp.page) : 1,
+        limit: qp.limit ? Number(qp.limit) : undefined,
+        // Try multiple shapes to maximize compatibility
+        category_id: categoryIdsArray[0] || null,
+        category_ids: categoryIdsArray,
+        categoryIds: categoryIdsArray, // some backends accept camelCase arrays
+      };
+
       forwardMethod = 'POST';
-      forwardBody = JSON.stringify(qp);
+      forwardBody = JSON.stringify(payload);
       // Remove query string when sending POST
       forwardUrl = targetUrl.split('?')[0];
     } else {
