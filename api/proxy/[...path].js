@@ -46,6 +46,8 @@ export default async function handler(req, res) {
     targetUrl = `${baseUrl}/local-mandi-categories${search}`;
   } else if (pathname.startsWith('/e-newspapers')) {
     targetUrl = `${baseUrl}/e-newspapers${search}`;
+  } else if (pathname.startsWith('/auth')) {
+    targetUrl = `${baseUrl}${pathname}${search}`;
   } else if (pathname.startsWith('/news')) {
     targetUrl = `${baseUrl}${pathname}${search}`;
   } else if (pathname.startsWith('/api') || pathname === '' || pathname === '/') {
@@ -64,6 +66,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Debug logging
+    console.log(`[Proxy] ${req.method} ${pathname} -> ${targetUrl}`);
+    
     // Some backend endpoints expect POST with JSON instead of GET with query
     let forwardMethod = req.method;
     let forwardBody;
@@ -94,7 +99,7 @@ export default async function handler(req, res) {
       forwardBody = req.method !== 'GET' ? JSON.stringify(req.body) : undefined;
     }
 
-    const response = await fetch(forwardUrl, {
+    let response = await fetch(forwardUrl, {
       method: forwardMethod,
       headers: {
         'Content-Type': 'application/json',
@@ -103,10 +108,26 @@ export default async function handler(req, res) {
       body: forwardBody
     });
 
+    // Fallback: if POST mapping for filter-advanced returns 404/405, retry as GET with original query
+    if (
+      (response.status === 404 || response.status === 405) &&
+      pathname === '/news/filter-advanced' &&
+      req.method === 'GET'
+    ) {
+      const retryUrl = `${baseUrl}${pathname}${search}`;
+      response = await fetch(retryUrl, {
+        method: 'GET',
+        headers: {
+          ...req.headers
+        }
+      });
+    }
+
     const data = await response.json();
+    console.log(`[Proxy] Response: ${response.status} for ${req.method} ${pathname}`);
     res.status(response.status).json(data);
   } catch (error) {
-    console.error('Proxy error:', error);
-    res.status(500).json({ error: 'Proxy request failed' });
+    console.error(`[Proxy] Error for ${req.method} ${pathname}:`, error);
+    res.status(500).json({ error: 'Proxy request failed', details: error.message });
   }
 }
