@@ -8,12 +8,47 @@
     },
     "api/test-simple.js": {
       "maxDuration": 30
+    },
+    "api/auth/userLogin.js": {
+      "maxDuration": 30
+    },
+    "api/auth/register.js": {
+      "maxDuration": 30
+    },
+    "api/auth/forgot-password.js": {
+      "maxDuration": 30
+    },
+    "api/auth/verify-code.js": {
+      "maxDuration": 30
+    },
+    "api/auth/reset-password.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
     {
       "source": "/api/test-simple",
       "destination": "/api/test-simple"
+    },
+    {
+      "source": "/api/auth/userLogin",
+      "destination": "/api/auth/userLogin"
+    },
+    {
+      "source": "/api/auth/register",
+      "destination": "/api/auth/register"
+    },
+    {
+      "source": "/api/auth/forgot-password",
+      "destination": "/api/auth/forgot-password"
+    },
+    {
+      "source": "/api/auth/verify-code",
+      "destination": "/api/auth/verify-code"
+    },
+    {
+      "source": "/api/auth/reset-password",
+      "destination": "/api/auth/reset-password"
     },
     {
       "source": "/api/(.*)",
