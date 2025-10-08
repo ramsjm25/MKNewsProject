@@ -20,7 +20,35 @@ export default async function handler(req, res) {
   const targetUrl = `${baseUrl}/auth/register`;
 
   try {
-    console.log(`[Auth] Register request:`, req.body);
+    console.log(`[Auth] Register request body:`, JSON.stringify(req.body, null, 2));
+    console.log(`[Auth] Register request headers:`, req.headers);
+    
+    // Validate required fields before sending
+    const { firstName, lastName, email, phone, password, roleId } = req.body;
+    
+    if (!firstName || !lastName || !email || !phone || !password || !roleId) {
+      console.log(`[Auth] Missing required fields:`, {
+        firstName: !!firstName,
+        lastName: !!lastName,
+        email: !!email,
+        phone: !!phone,
+        password: !!password,
+        roleId: !!roleId
+      });
+      
+      res.status(400).json({
+        error: 'Missing required fields',
+        details: {
+          firstName: !firstName ? 'firstName is required' : null,
+          lastName: !lastName ? 'lastName is required' : null,
+          email: !email ? 'email is required' : null,
+          phone: !phone ? 'phone is required' : null,
+          password: !password ? 'password is required' : null,
+          roleId: !roleId ? 'roleId is required' : null
+        }
+      });
+      return;
+    }
     
     const response = await fetch(targetUrl, {
       method: 'POST',

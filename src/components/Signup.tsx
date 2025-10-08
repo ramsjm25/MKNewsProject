@@ -39,7 +39,9 @@ const Signup = ({ onSuccess, onSwitchToLogin, onError, onClearError }: SignupPro
     ];
 
     for (const field of requiredFields) {
-      if (!formData[field as keyof typeof formData].trim()) {
+      const value = formData[field as keyof typeof formData];
+      if (!value || !value.toString().trim()) {
+        console.log(`Validation failed for field: ${field}, value:`, value);
         onError(t("auth.fillAllFields") || "Please fill all fields");
         return false;
       }
@@ -95,11 +97,28 @@ const Signup = ({ onSuccess, onSwitchToLogin, onError, onClearError }: SignupPro
       setLoading(true);
 
       const { confirmPassword, ...payload } = formData;
-
-      const response = await apiClient.post(`/auth/register`, {
-        ...payload,
+      
+      // Ensure all required fields are present and not empty
+      const finalPayload = {
+        firstName: payload.firstName?.trim() || '',
+        lastName: payload.lastName?.trim() || '',
+        email: payload.email?.trim() || '',
+        phone: payload.phone?.trim() || '',
+        password: payload.password || '',
         roleId: ROLE_ID,
-      });
+      };
+      
+      // Debug: Log the payload being sent
+      console.log("Signup payload:", finalPayload);
+      console.log("Form data before processing:", formData);
+      
+      // Final validation before sending
+      if (!finalPayload.firstName || !finalPayload.lastName || !finalPayload.email || !finalPayload.phone || !finalPayload.password) {
+        onError("Please fill all required fields");
+        return;
+      }
+
+      const response = await apiClient.post(`/auth/register`, finalPayload);
 
       console.log("Signup successful:", response.data);
       onSuccess();

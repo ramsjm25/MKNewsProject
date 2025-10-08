@@ -6,6 +6,9 @@
     "api/test.js": {
       "maxDuration": 10
     },
+    "api/test-auth.js": {
+      "maxDuration": 10
+    },
     "api/auth/userLogin.js": {
       "maxDuration": 30
     },
@@ -26,6 +29,10 @@
     {
       "source": "/api/test",
       "destination": "/api/test"
+    },
+    {
+      "source": "/api/test-auth",
+      "destination": "/api/test-auth"
     },
     {
       "source": "/api/health",

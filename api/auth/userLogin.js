@@ -20,7 +20,27 @@ export default async function handler(req, res) {
   const targetUrl = `${baseUrl}/auth/userLogin`;
 
   try {
-    console.log(`[Auth] UserLogin request:`, req.body);
+    console.log(`[Auth] UserLogin request body:`, JSON.stringify(req.body, null, 2));
+    console.log(`[Auth] UserLogin request headers:`, req.headers);
+    
+    // Validate required fields
+    const { emailOrPhone, password } = req.body;
+    
+    if (!emailOrPhone || !password) {
+      console.log(`[Auth] Missing required fields:`, {
+        emailOrPhone: !!emailOrPhone,
+        password: !!password
+      });
+      
+      res.status(400).json({
+        error: 'Missing required fields',
+        details: {
+          emailOrPhone: !emailOrPhone ? 'emailOrPhone is required' : null,
+          password: !password ? 'password is required' : null
+        }
+      });
+      return;
+    }
     
     const response = await fetch(targetUrl, {
       method: 'POST',

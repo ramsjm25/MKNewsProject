@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,8 +47,17 @@ const Login = ({ onSuccess, onSwitchToSignup, onError, onClearError }: LoginProp
     code: string;
   }>({ email: '', code: '' });
 
+  // Debug: Log form data changes
+  useEffect(() => {
+    console.log("Login form data changed:", formData);
+  }, [formData]);
+
   const validateForm = () => {
-    if (!formData.emailOrPhone || !formData.password) {
+    const emailOrPhone = formData.emailOrPhone?.trim();
+    const password = formData.password?.trim();
+    
+    if (!emailOrPhone || !password) {
+      console.log(`Login validation failed - emailOrPhone: "${emailOrPhone}", password: "${password}"`);
       onError(t("auth.fillAllFields") || "Please fill all fields");
       return false;
     }
@@ -57,7 +66,7 @@ const Login = ({ onSuccess, onSwitchToSignup, onError, onClearError }: LoginProp
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^[0-9]{10}$/;
     
-    if (!emailRegex.test(formData.emailOrPhone) && !phoneRegex.test(formData.emailOrPhone)) {
+    if (!emailRegex.test(emailOrPhone) && !phoneRegex.test(emailOrPhone)) {
       onError(t("auth.invalidEmail") || "Please enter a valid email or 10-digit phone number");
       return false;
     }
@@ -74,10 +83,22 @@ const Login = ({ onSuccess, onSwitchToSignup, onError, onClearError }: LoginProp
 
     try {
       setLoading(true);
+      
+      // Ensure all required fields are present and properly sanitized
       const payload = {
-        emailOrPhone: formData.emailOrPhone,
-        password: formData.password,
+        emailOrPhone: formData.emailOrPhone?.trim() || '',
+        password: formData.password || '',
       };
+      
+      // Debug: Log the payload being sent
+      console.log("Login payload:", payload);
+      console.log("Form data before processing:", formData);
+      
+      // Final validation before sending
+      if (!payload.emailOrPhone || !payload.password) {
+        onError("Please fill all required fields");
+        return;
+      }
 
       const res = await apiClient.post<LoginResponse>("/auth/userLogin", payload);
       console.log("Login API response:", res.data);
@@ -150,7 +171,12 @@ const Login = ({ onSuccess, onSwitchToSignup, onError, onClearError }: LoginProp
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    console.log(`Login form input change - field: ${field}, value: "${value}"`);
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      console.log(`Login form data updated:`, newData);
+      return newData;
+    });
     // Clear error when user starts typing
     if (onClearError) {
       onClearError();
