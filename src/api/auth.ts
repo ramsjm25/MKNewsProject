@@ -107,12 +107,10 @@ export const forgotPassword = async (email: string): Promise<{ email: string }> 
   try {
     console.log('Sending forgot password request for:', email);
     
-    // Try enhanced endpoint first (handles OTP generation)
+    // Try backend through proxy first
     try {
-      const response = await apiClient.post('/auth/forgot-password-enhanced', { email });
-      console.log('Forgot password response (enhanced):', response.data);
-      console.log('Response source:', response.data._source);
-      console.log('Response message:', response.data._message);
+      const response = await apiClient.post('/auth/forgot-password', { email });
+      console.log('Forgot password response (backend):', response.data);
       
       // Check if OTP is included in response
       if (response.data.result && response.data.result.otp) {
@@ -121,29 +119,20 @@ export const forgotPassword = async (email: string): Promise<{ email: string }> 
       }
       
       return response.data;
-    } catch (enhancedError) {
-      console.log('Enhanced endpoint failed, trying original:', enhancedError.message);
+    } catch (backendError) {
+      console.log('Backend endpoint failed, trying mock service:', backendError.message);
       
-      // Try original endpoint
-      try {
-        const response = await apiClient.post('/auth/forgot-password', { email });
-        console.log('Forgot password response (original):', response.data);
-        return response.data;
-      } catch (originalError) {
-        console.log('Original endpoint failed, trying mock service:', originalError.message);
-        
-        // Fallback to mock service for local development
-        const mockResponse = await apiClient.post('/mock-email-service', { 
-          email, 
-          action: 'send-otp' 
-        });
-        console.log('Forgot password response (mock):', mockResponse.data);
-        return {
-          ...mockResponse.data,
-          _source: 'mock-email-service',
-          _message: 'Using mock email service - check console for OTP'
-        };
-      }
+      // Fallback to mock service
+      const mockResponse = await apiClient.post('/mock-email-service', { 
+        email, 
+        action: 'send-otp' 
+      });
+      console.log('Forgot password response (mock):', mockResponse.data);
+      return {
+        ...mockResponse.data,
+        _source: 'mock-email-service',
+        _message: 'Using mock email service - check console for OTP'
+      };
     }
   } catch (error: any) {
     console.error('Forgot password error:', error);
@@ -155,7 +144,7 @@ export const verifyCode = async (email: string, code: string): Promise<VerifyCod
   try {
     console.log('Verifying OTP code for:', email);
     
-    // Try backend first
+    // Try backend through proxy first
     try {
       const response = await apiClient.post('/auth/verify-code', { email, code });
       console.log('Verify code response (backend):', response.data);
@@ -182,7 +171,7 @@ export const resetPassword = async (email: string, code: string, newPassword: st
   try {
     console.log('Resetting password for:', email);
     
-    // Try backend first
+    // Try backend through proxy first
     try {
       const response = await apiClient.post('/auth/reset-password', { 
         email, 

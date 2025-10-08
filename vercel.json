@@ -3,100 +3,14 @@
     "api/proxy/[...path].js": {
       "maxDuration": 30
     },
-    "api/auth/userLogin.js": {
-      "maxDuration": 30
-    },
-    "api/auth/register.js": {
-      "maxDuration": 30
-    },
-    "api/auth/forgot-password.js": {
-      "maxDuration": 30
-    },
-    "api/auth/verify-code.js": {
-      "maxDuration": 30
-    },
-    "api/auth/reset-password.js": {
-      "maxDuration": 30
-    },
-    "api/test-forgot-password-simple.js": {
-      "maxDuration": 30
-    },
-    "api/test-complete-forgot-password-flow.js": {
-      "maxDuration": 30
-    },
-    "api/test-backend-forgot-password.js": {
-      "maxDuration": 30
-    },
     "api/mock-email-service.js": {
       "maxDuration": 30
     },
-    "api/auth/forgot-password-fallback.js": {
-      "maxDuration": 30
-    },
-    "api/test-email-content.js": {
-      "maxDuration": 30
-    },
-    "api/auth/forgot-password-enhanced.js": {
+    "api/test-proxy.js": {
       "maxDuration": 30
     }
   },
   "rewrites": [
-    {
-      "source": "/api/health",
-      "destination": "/api/proxy/health"
-    },
-    {
-      "source": "/api/auth/userLogin",
-      "destination": "/api/auth/userLogin"
-    },
-    {
-      "source": "/api/auth/register",
-      "destination": "/api/auth/register"
-    },
-    {
-      "source": "/api/auth/forgot-password",
-      "destination": "/api/auth/forgot-password"
-    },
-    {
-      "source": "/api/auth/verify-code",
-      "destination": "/api/auth/verify-code"
-    },
-    {
-      "source": "/api/auth/reset-password",
-      "destination": "/api/auth/reset-password"
-    },
-    {
-      "source": "/api/test-forgot-password-simple",
-      "destination": "/api/test-forgot-password-simple"
-    },
-    {
-      "source": "/api/test-complete-forgot-password-flow",
-      "destination": "/api/test-complete-forgot-password-flow"
-    },
-    {
-      "source": "/api/test-backend-forgot-password",
-      "destination": "/api/test-backend-forgot-password"
-    },
-    {
-      "source": "/api/mock-email-service",
-      "destination": "/api/mock-email-service"
-    },
-    {
-      "source": "/api/auth/forgot-password-fallback",
-      "destination": "/api/auth/forgot-password-fallback"
-    },
-    {
-      "source": "/api/test-email-content",
-      "destination": "/api/test-email-content"
-    },
-    {
-      "source": "/api/auth/forgot-password-enhanced",
-      "destination": "/api/auth/forgot-password-enhanced"
-    },
-    {
-      "source": "/api",
-      "destination": "/api/proxy"
-    },
     {
       "source": "/api/(.*)",
       "destination": "/api/proxy/$1"
