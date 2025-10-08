@@ -20,19 +20,70 @@ export default async function handler(req, res) {
   const targetUrl = `${baseUrl}/auth/forgot-password`;
 
   try {
-    console.log(`[Auth] Forgot password request:`, req.body);
+    console.log(`[Auth] Forgot password request body:`, JSON.stringify(req.body, null, 2));
+    console.log(`[Auth] Forgot password request headers:`, req.headers);
+    
+    // Validate required fields before sending
+    const { email } = req.body;
+    
+    console.log(`[Auth] Extracted email field:`, {
+      email: email,
+      emailType: typeof email,
+      emailTrimmed: email?.trim()
+    });
+    
+    if (!email || !email.trim()) {
+      console.log(`[Auth] Missing email field:`, {
+        email: !!email,
+        emailValue: email
+      });
+      
+      res.status(400).json({
+        error: 'Missing required fields',
+        details: {
+          email: !email ? 'email is required' : null
+        }
+      });
+      return;
+    }
+    
+    // Create a clean payload to send to backend
+    const backendPayload = {
+      email: email.trim()
+    };
+    
+    console.log(`[Auth] Sending to backend:`, {
+      email: backendPayload.email
+    });
     
     const response = await fetch(targetUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...req.headers
+        'Accept': 'application/json',
+        'User-Agent': 'Vercel-Proxy/1.0'
       },
-      body: JSON.stringify(req.body)
+      body: JSON.stringify(backendPayload)
     });
 
     const data = await response.json();
     console.log(`[Auth] Forgot password response: ${response.status}`);
+    console.log(`[Auth] Backend response data:`, JSON.stringify(data, null, 2));
+    
+    if (response.status !== 200 && response.status !== 201) {
+      console.log(`[Auth] Backend error response:`, {
+        status: response.status,
+        data: data
+      });
+    } else {
+      console.log(`[Auth] Forgot password successful - checking if OTP was sent`);
+      console.log(`[Auth] Response status:`, data.status);
+      console.log(`[Auth] Response message:`, data.message);
+      console.log(`[Auth] Response contains email:`, !!data.email);
+      console.log(`[Auth] Response contains result:`, !!data.result);
+      console.log(`[Auth] Full response structure:`, Object.keys(data));
+      console.log(`[Auth] Response result content:`, data.result);
+    }
     
     res.status(response.status).json(data);
   } catch (error) {

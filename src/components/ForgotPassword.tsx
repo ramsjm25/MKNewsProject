@@ -40,12 +40,22 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onBack, onSuccess }) =>
     setLoading(true);
 
     try {
+      console.log('Sending forgot password request for email:', email);
       const response = await forgotPassword(email);
       console.log('Forgot password successful:', response);
-      setSuccess(t('auth.otpSent'));
-      setTimeout(() => {
-        onSuccess(email);
-      }, 2000);
+      console.log('Response data:', response);
+      
+      // Check if the response indicates OTP was sent
+      // Backend returns: {status: 1, message: 'Request processed successfully', result: {...}}
+      if (response && (response.status === 1 || response.status === 200 || response.email)) {
+        setSuccess(t('auth.otpSent') || 'OTP has been sent to your email address');
+        setTimeout(() => {
+          onSuccess(email);
+        }, 2000);
+      } else {
+        console.log('Response validation failed:', response);
+        setError('Failed to send OTP. Please try again.');
+      }
     } catch (error: any) {
       console.error('Forgot password error:', error);
       console.error('Error details:', {

@@ -126,12 +126,28 @@ export default async function handler(req, res) {
       forwardBody = req.method !== 'GET' ? JSON.stringify(req.body) : undefined;
     }
 
+    // Enhanced headers for better compatibility
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'User-Agent': 'Vercel-Proxy/1.0',
+      ...req.headers
+    };
+
+    // Remove potentially problematic headers
+    delete headers.host;
+    delete headers['x-forwarded-for'];
+    delete headers['x-forwarded-proto'];
+    delete headers['x-forwarded-port'];
+
+    console.log(`[Proxy] Making request to: ${forwardUrl}`);
+    console.log(`[Proxy] Method: ${forwardMethod}`);
+    console.log(`[Proxy] Headers:`, headers);
+    console.log(`[Proxy] Body:`, forwardBody);
+
     let response = await fetch(forwardUrl, {
       method: forwardMethod,
-      headers: {
-        'Content-Type': 'application/json',
-        ...req.headers
-      },
+      headers: headers,
       body: forwardBody
     });
 
@@ -141,13 +157,19 @@ export default async function handler(req, res) {
       pathname === '/news/filter-advanced' &&
       req.method === 'GET'
     ) {
+      console.log(`[Proxy] POST failed with ${response.status}, retrying as GET`);
       const retryUrl = `${baseUrl}${pathname}${search}`;
+      console.log(`[Proxy] Retry URL: ${retryUrl}`);
+      
       response = await fetch(retryUrl, {
         method: 'GET',
         headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Vercel-Proxy/1.0',
           ...req.headers
         }
       });
+      console.log(`[Proxy] Retry response: ${response.status}`);
     }
 
     const data = await response.json();

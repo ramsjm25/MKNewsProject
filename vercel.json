@@ -12,6 +12,15 @@
     "api/test-backend.js": {
       "maxDuration": 30
     },
+    "api/test-forgot-password.js": {
+      "maxDuration": 30
+    },
+    "api/test-e-newspapers.js": {
+      "maxDuration": 30
+    },
+    "api/test-news-filter.js": {
+      "maxDuration": 30
+    },
     "api/auth/userLogin.js": {
       "maxDuration": 30
     },
@@ -40,6 +49,18 @@
     {
       "source": "/api/test-backend",
       "destination": "/api/test-backend"
+    },
+    {
+      "source": "/api/test-forgot-password",
+      "destination": "/api/test-forgot-password"
+    },
+    {
+      "source": "/api/test-e-newspapers",
+      "destination": "/api/test-e-newspapers"
+    },
+    {
+      "source": "/api/test-news-filter",
+      "destination": "/api/test-news-filter"
     },
     {
       "source": "/api/health",
