@@ -27,6 +27,15 @@ export default async function handler(req, res) {
     return;
   }
 
+  // Skip auth endpoints - they have their own handlers
+  if (req.url?.startsWith('/api/auth/')) {
+    res.status(404).json({ 
+      error: 'Auth endpoint not found in proxy',
+      message: 'This auth endpoint should be handled by its specific handler'
+    });
+    return;
+  }
+
   const baseUrl = 'https://phpstack-1520234-5847937.cloudwaysapps.com/api/v1';
 
   // Map known app endpoints to real backend endpoints
