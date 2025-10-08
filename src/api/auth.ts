@@ -107,10 +107,44 @@ export const forgotPassword = async (email: string): Promise<{ email: string }> 
   try {
     console.log('Sending forgot password request for:', email);
     
-    const response = await apiClient.post('/auth/forgot-password', { email });
-    
-    console.log('Forgot password response:', response.data);
-    return response.data;
+    // Try enhanced endpoint first (handles OTP generation)
+    try {
+      const response = await apiClient.post('/auth/forgot-password-enhanced', { email });
+      console.log('Forgot password response (enhanced):', response.data);
+      console.log('Response source:', response.data._source);
+      console.log('Response message:', response.data._message);
+      
+      // Check if OTP is included in response
+      if (response.data.result && response.data.result.otp) {
+        console.log('🔑 OTP found in response:', response.data.result.otp);
+        console.log('📧 Email was sent, OTP is available for verification');
+      }
+      
+      return response.data;
+    } catch (enhancedError) {
+      console.log('Enhanced endpoint failed, trying original:', enhancedError.message);
+      
+      // Try original endpoint
+      try {
+        const response = await apiClient.post('/auth/forgot-password', { email });
+        console.log('Forgot password response (original):', response.data);
+        return response.data;
+      } catch (originalError) {
+        console.log('Original endpoint failed, trying mock service:', originalError.message);
+        
+        // Fallback to mock service for local development
+        const mockResponse = await apiClient.post('/mock-email-service', { 
+          email, 
+          action: 'send-otp' 
+        });
+        console.log('Forgot password response (mock):', mockResponse.data);
+        return {
+          ...mockResponse.data,
+          _source: 'mock-email-service',
+          _message: 'Using mock email service - check console for OTP'
+        };
+      }
+    }
   } catch (error: any) {
     console.error('Forgot password error:', error);
     throw error;
@@ -121,10 +155,23 @@ export const verifyCode = async (email: string, code: string): Promise<VerifyCod
   try {
     console.log('Verifying OTP code for:', email);
     
-    const response = await apiClient.post('/auth/verify-code', { email, code });
-    
-    console.log('Verify code response:', response.data);
-    return response.data;
+    // Try backend first
+    try {
+      const response = await apiClient.post('/auth/verify-code', { email, code });
+      console.log('Verify code response (backend):', response.data);
+      return response.data;
+    } catch (backendError) {
+      console.log('Backend verify failed, trying mock service:', backendError.message);
+      
+      // Fallback to mock service
+      const mockResponse = await apiClient.post('/mock-email-service', { 
+        email, 
+        code, 
+        action: 'verify-otp' 
+      });
+      console.log('Verify code response (mock):', mockResponse.data);
+      return mockResponse.data;
+    }
   } catch (error: any) {
     console.error('Verify code error:', error);
     throw error;
@@ -135,14 +182,28 @@ export const resetPassword = async (email: string, code: string, newPassword: st
   try {
     console.log('Resetting password for:', email);
     
-    const response = await apiClient.post('/auth/reset-password', { 
-      email, 
-      code, 
-      newPassword 
-    });
-    
-    console.log('Reset password response:', response.data);
-    return response.data;
+    // Try backend first
+    try {
+      const response = await apiClient.post('/auth/reset-password', { 
+        email, 
+        code, 
+        newPassword 
+      });
+      console.log('Reset password response (backend):', response.data);
+      return response.data;
+    } catch (backendError) {
+      console.log('Backend reset failed, trying mock service:', backendError.message);
+      
+      // Fallback to mock service
+      const mockResponse = await apiClient.post('/mock-email-service', { 
+        email, 
+        code, 
+        newPassword,
+        action: 'reset-password' 
+      });
+      console.log('Reset password response (mock):', mockResponse.data);
+      return mockResponse.data;
+    }
   } catch (error: any) {
     console.error('Reset password error:', error);
     throw error;

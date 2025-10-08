@@ -215,8 +215,15 @@ const Login = ({ onSuccess, onSwitchToSignup, onError, onClearError }: LoginProp
   };
 
   const handleResendOTP = async () => {
-    // This will be handled by the VerifyOTP component
-    return Promise.resolve();
+    try {
+      console.log('Resending OTP for email:', forgotPasswordData.email);
+      const response = await forgotPassword(forgotPasswordData.email);
+      console.log('Resend OTP response:', response);
+      return response;
+    } catch (error: any) {
+      console.error('Resend OTP error:', error);
+      throw error;
+    }
   };
 
   // Render different components based on current step

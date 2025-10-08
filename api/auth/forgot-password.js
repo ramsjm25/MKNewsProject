@@ -83,6 +83,18 @@ export default async function handler(req, res) {
       console.log(`[Auth] Response contains result:`, !!data.result);
       console.log(`[Auth] Full response structure:`, Object.keys(data));
       console.log(`[Auth] Response result content:`, data.result);
+      
+      // Check if the response indicates OTP was actually sent
+      if (data.message && data.message.includes('sent')) {
+        console.log(`[Auth] ✅ OTP appears to have been sent based on message`);
+      } else if (data.result && data.result.otp) {
+        console.log(`[Auth] ✅ OTP found in result:`, data.result.otp);
+      } else if (data.result && data.result.email) {
+        console.log(`[Auth] ✅ Email found in result:`, data.result.email);
+      } else {
+        console.log(`[Auth] ⚠️  No clear indication that OTP was sent`);
+        console.log(`[Auth] ⚠️  Backend may not be configured to send emails`);
+      }
     }
     
     res.status(response.status).json(data);
