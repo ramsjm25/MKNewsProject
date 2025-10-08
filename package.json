@@ -9,8 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "vercel-build": "npm run build",
-    "api-server": "node local-api-server.js"
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.0.0",

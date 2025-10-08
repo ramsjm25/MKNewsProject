@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,6 @@ import apiClient from '@/api/apiClient';
 import ForgotPassword from './ForgotPassword';
 import VerifyOTP from './VerifyOTP';
 import ResetPassword from './ResetPassword';
-import { Eye, EyeOff } from "lucide-react";
 
 interface LoginProps {
   onSuccess: (user: any) => void;
@@ -36,7 +35,6 @@ interface LoginResponse {
 const Login = ({ onSuccess, onSwitchToSignup, onError, onClearError }: LoginProps) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     emailOrPhone: "",
     password: "",
@@ -47,17 +45,8 @@ const Login = ({ onSuccess, onSwitchToSignup, onError, onClearError }: LoginProp
     code: string;
   }>({ email: '', code: '' });
 
-  // Debug: Log form data changes
-  useEffect(() => {
-    console.log("Login form data changed:", formData);
-  }, [formData]);
-
   const validateForm = () => {
-    const emailOrPhone = formData.emailOrPhone?.trim();
-    const password = formData.password?.trim();
-    
-    if (!emailOrPhone || !password) {
-      console.log(`Login validation failed - emailOrPhone: "${emailOrPhone}", password: "${password}"`);
+    if (!formData.emailOrPhone || !formData.password) {
       onError(t("auth.fillAllFields") || "Please fill all fields");
       return false;
     }
@@ -66,7 +55,7 @@ const Login = ({ onSuccess, onSwitchToSignup, onError, onClearError }: LoginProp
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^[0-9]{10}$/;
     
-    if (!emailRegex.test(emailOrPhone) && !phoneRegex.test(emailOrPhone)) {
+    if (!emailRegex.test(formData.emailOrPhone) && !phoneRegex.test(formData.emailOrPhone)) {
       onError(t("auth.invalidEmail") || "Please enter a valid email or 10-digit phone number");
       return false;
     }
@@ -83,22 +72,10 @@ const Login = ({ onSuccess, onSwitchToSignup, onError, onClearError }: LoginProp
 
     try {
       setLoading(true);
-      
-      // Ensure all required fields are present and properly sanitized
       const payload = {
-        emailOrPhone: formData.emailOrPhone?.trim() || '',
-        password: formData.password || '',
+        emailOrPhone: formData.emailOrPhone,
+        password: formData.password,
       };
-      
-      // Debug: Log the payload being sent
-      console.log("Login payload:", payload);
-      console.log("Form data before processing:", formData);
-      
-      // Final validation before sending
-      if (!payload.emailOrPhone || !payload.password) {
-        onError("Please fill all required fields");
-        return;
-      }
 
       const res = await apiClient.post<LoginResponse>("/auth/userLogin", payload);
       console.log("Login API response:", res.data);
@@ -171,12 +148,7 @@ const Login = ({ onSuccess, onSwitchToSignup, onError, onClearError }: LoginProp
   };
 
   const handleInputChange = (field: string, value: string) => {
-    console.log(`Login form input change - field: ${field}, value: "${value}"`);
-    setFormData(prev => {
-      const newData = { ...prev, [field]: value };
-      console.log(`Login form data updated:`, newData);
-      return newData;
-    });
+    setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (onClearError) {
       onClearError();
@@ -215,15 +187,8 @@ const Login = ({ onSuccess, onSwitchToSignup, onError, onClearError }: LoginProp
   };
 
   const handleResendOTP = async () => {
-    try {
-      console.log('Resending OTP for email:', forgotPasswordData.email);
-      const response = await forgotPassword(forgotPasswordData.email);
-      console.log('Resend OTP response:', response);
-      return response;
-    } catch (error: any) {
-      console.error('Resend OTP error:', error);
-      throw error;
-    }
+    // This will be handled by the VerifyOTP component
+    return Promise.resolve();
   };
 
   // Render different components based on current step
@@ -281,31 +246,16 @@ const Login = ({ onSuccess, onSwitchToSignup, onError, onClearError }: LoginProp
             autoComplete="username"
           />
 
-          <div className="relative">
-            <Input
-              type={showPassword ? "text" : "password"}
-              placeholder={t("auth.password") || "Password"}
-              value={formData.password}
-              onChange={(e) => handleInputChange("password", e.target.value)}
-              onKeyPress={handleKeyPress}
-              disabled={loading}
-              className="w-full pr-10"
-              autoComplete="current-password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              disabled={loading}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
-            </button>
-          </div>
+          <Input
+            type="password"
+            placeholder={t("auth.password") || "Password"}
+            value={formData.password}
+            onChange={(e) => handleInputChange("password", e.target.value)}
+            onKeyPress={handleKeyPress}
+            disabled={loading}
+            className="w-full"
+            autoComplete="current-password"
+          />
 
           <Button
             type="submit"

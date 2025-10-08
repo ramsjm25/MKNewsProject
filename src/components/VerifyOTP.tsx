@@ -77,7 +77,6 @@ const VerifyOTP: React.FC<VerifyOTPProps> = ({ email, onBack, onSuccess, onResen
     setLoading(true);
 
     try {
-      console.log('Verifying OTP code:', otpCode, 'for email:', email);
       const response = await verifyCode(email, otpCode);
       console.log('OTP verification successful:', response);
       onSuccess(email, otpCode);

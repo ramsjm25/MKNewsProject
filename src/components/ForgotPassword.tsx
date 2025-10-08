@@ -40,60 +40,12 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onBack, onSuccess }) =>
     setLoading(true);
 
     try {
-      console.log('Sending forgot password request for email:', email);
       const response = await forgotPassword(email);
       console.log('Forgot password successful:', response);
-      console.log('Response data:', response);
-      
-      // Check if the response indicates OTP was sent
-      // Backend returns: {status: 1, message: 'Request processed successfully', result: {...}}
-      console.log('Validating response for OTP send indication:', {
-        status: response?.status,
-        message: response?.message,
-        hasEmail: !!response?.email,
-        hasResult: !!response?.result,
-        resultKeys: response?.result ? Object.keys(response.result) : []
-      });
-      
-      const isOtpSent = response && (
-        response.status === 1 || 
-        response.status === 200 || 
-        response.email ||
-        (response.message && response.message.toLowerCase().includes('sent')) ||
-        (response.result && (response.result.otp || response.result.email))
-      );
-      
-      if (isOtpSent) {
-        console.log('✅ OTP send confirmed, showing success message');
-        
-        // Check if OTP is available in response
-        if (response.result?.otp) {
-          console.log('🔑 OTP AVAILABLE IN RESPONSE:', response.result.otp);
-          console.log('📧 Email was sent and OTP is available for verification');
-          
-          if (response._source === 'mock-email-service') {
-            setSuccess(`OTP sent successfully! For testing: ${response.result.otp} (Check console for details)`);
-          } else {
-            setSuccess(`OTP sent successfully! Your verification code is: ${response.result.otp} (Also check your email)`);
-          }
-        } else {
-          // Check if using mock service
-          if (response._source === 'mock-email-service') {
-            console.log('🔑 MOCK OTP FOR TESTING:', response.result?.otp);
-            console.log('📧 This OTP is for testing purposes only');
-            setSuccess(`OTP sent successfully! For testing: ${response.result?.otp} (Check console for details)`);
-          } else {
-            setSuccess(t('auth.otpSent') || 'OTP has been sent to your email address. Please check your email and spam folder.');
-          }
-        }
-        
-        setTimeout(() => {
-          onSuccess(email);
-        }, 2000);
-      } else {
-        console.log('❌ OTP send not confirmed, showing error:', response);
-        setError('Failed to send OTP. Please check your email address or try again later. If the problem persists, contact support.');
-      }
+      setSuccess(t('auth.otpSent'));
+      setTimeout(() => {
+        onSuccess(email);
+      }, 2000);
     } catch (error: any) {
       console.error('Forgot password error:', error);
       console.error('Error details:', {

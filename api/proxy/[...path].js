@@ -1,92 +1,82 @@
 export default async function handler(req, res) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  const baseUrl = 'https://phpstack-1520234-5847937.cloudwaysapps.com/api/v1';
+
+  // Map known app endpoints to real backend endpoints
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  // Normalize pathname by removing the serverless mount prefix
+  const stripped = url.pathname.replace(/^\/api(?:\/proxy)?/, '');
+  const pathname = stripped.startsWith('/') ? stripped : `/${stripped}`;
+  const search = url.search || '';
+  const searchParams = url.searchParams;
+
+  // Helper: remove `type` param but keep others intact
+  const buildSearchWithoutType = () => {
+    const sp = new URLSearchParams(searchParams);
+    sp.delete('type');
+    const s = sp.toString();
+    return s ? `?${s}` : '';
+  };
+
+  let targetUrl = baseUrl;
+
+  // Handle explicit endpoints
+  if (pathname.startsWith('/data')) {
+    // e.g. /api/data?type=languages
+    const type = searchParams.get('type');
+    if (type === 'languages') targetUrl = `${baseUrl}/news/languages`;
+    else if (type === 'categories') targetUrl = `${baseUrl}/news/categories${buildSearchWithoutType()}`;
+    else if (type === 'states') targetUrl = `${baseUrl}/news/states${buildSearchWithoutType()}`;
+    else if (type === 'districts') targetUrl = `${baseUrl}/news/districts${buildSearchWithoutType()}`;
+    else if (type === 'category-keywords') targetUrl = `${baseUrl}/news/category-keywords`;
+    else if (type === 'urgency-patterns') targetUrl = `${baseUrl}/news/urgency-patterns`;
+    else targetUrl = `${baseUrl}${pathname}${search}`;
+  } else if (pathname.startsWith('/local-mandi-categories')) {
+    targetUrl = `${baseUrl}/local-mandi-categories${search}`;
+  } else if (pathname.startsWith('/e-newspapers')) {
+    targetUrl = `${baseUrl}/e-newspapers${search}`;
+  } else if (pathname.startsWith('/news')) {
+    targetUrl = `${baseUrl}${pathname}${search}`;
+  } else if (pathname.startsWith('/api') || pathname === '' || pathname === '/') {
+    // Legacy: /api?type=languages
+    const type = searchParams.get('type');
+    if (type === 'languages') targetUrl = `${baseUrl}/news/languages`;
+    else if (type === 'categories') targetUrl = `${baseUrl}/news/categories${buildSearchWithoutType()}`;
+    else if (type === 'states') targetUrl = `${baseUrl}/news/states${buildSearchWithoutType()}`;
+    else if (type === 'districts') targetUrl = `${baseUrl}/news/districts${buildSearchWithoutType()}`;
+    else if (type === 'category-keywords') targetUrl = `${baseUrl}/news/category-keywords`;
+    else if (type === 'urgency-patterns') targetUrl = `${baseUrl}/news/urgency-patterns`;
+    else targetUrl = `${baseUrl}${pathname}${search}`;
+  } else {
+    // Pass-through for any other paths
+    targetUrl = `${baseUrl}${pathname}${search}`;
+  }
+
   try {
-    // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-
-    // Handle preflight requests
-    if (req.method === 'OPTIONS') {
-      res.status(200).end();
-      return;
-    }
-
-    console.log(`[Proxy] ${req.method} ${req.url}`);
-
-    // Health check
-    if (req.url === '/api/health' || req.url === '/api/proxy/health') {
-      res.status(200).json({ 
-        status: 'ok', 
-        message: 'Proxy is working',
-        timestamp: new Date().toISOString()
-      });
-      return;
-    }
-
-    const baseUrl = 'https://phpstack-1520234-5847937.cloudwaysapps.com/api/v1';
-    
-    // Extract path from URL
-    let path = req.url;
-    if (path.startsWith('/api/proxy/')) {
-      path = path.replace('/api/proxy', '');
-    } else if (path.startsWith('/api/')) {
-      path = path.replace('/api', '');
-    }
-    
-    // Build target URL
-    const targetUrl = `${baseUrl}${path}`;
-    console.log(`[Proxy] Target URL: ${targetUrl}`);
-
-    // Prepare headers
-    const headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'User-Agent': 'Vercel-Proxy/1.0'
-    };
-
-    // Add authorization header if present
-    if (req.headers.authorization) {
-      headers['Authorization'] = req.headers.authorization;
-    }
-
-    // Prepare body for POST/PUT requests
-    let body;
-    if (req.method !== 'GET' && req.body) {
-      body = JSON.stringify(req.body);
-    }
-
-    console.log(`[Proxy] Making request to: ${targetUrl}`);
-    console.log(`[Proxy] Method: ${req.method}`);
-    console.log(`[Proxy] Headers:`, headers);
-
-    // Make the request
     const response = await fetch(targetUrl, {
       method: req.method,
-      headers: headers,
-      body: body
+      headers: {
+        'Content-Type': 'application/json',
+        ...req.headers
+      },
+      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined
     });
 
-    console.log(`[Proxy] Response status: ${response.status}`);
-
-    // Get response data
     const data = await response.json();
-    console.log(`[Proxy] Response data:`, data);
-
-    // Return the response
     res.status(response.status).json(data);
-
   } catch (error) {
-    console.error(`[Proxy] Error:`, error);
-    console.error(`[Proxy] Error stack:`, error.stack);
-    
-    // Return user-friendly error
-    res.status(500).json({ 
-      error: 'Service temporarily unavailable. Please try again later.',
-      message: 'Service temporarily unavailable. Please try again later.',
-      status: 0,
-      type: 'SERVICE_UNAVAILABLE',
-      timestamp: new Date().toISOString()
-    });
+    console.error('Proxy error:', error);
+    res.status(500).json({ error: 'Proxy request failed' });
   }
 }

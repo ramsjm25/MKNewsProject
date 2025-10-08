@@ -67,10 +67,9 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ email, code, onBack, onSu
     setLoading(true);
 
     try {
-      console.log('Resetting password for email:', email, 'with code:', code);
       const response = await resetPassword(email, code, newPassword);
       console.log('Reset password successful:', response);
-      setSuccess(t('auth.passwordResetSuccess') || 'Password reset successfully! You can now login with your new password.');
+      setSuccess(t('auth.passwordResetSuccess'));
       setTimeout(() => {
         onSuccess();
       }, 2000);

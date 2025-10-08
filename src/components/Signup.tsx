@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import apiClient from '@/api/apiClient';
-import { Eye, EyeOff } from "lucide-react";
 
 const ROLE_ID = "4f8617f0-a33e-4cc8-9971-704277715354" as const;
 
@@ -17,8 +16,6 @@ interface SignupProps {
 const Signup = ({ onSuccess, onSwitchToLogin, onError, onClearError }: SignupProps) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -39,9 +36,7 @@ const Signup = ({ onSuccess, onSwitchToLogin, onError, onClearError }: SignupPro
     ];
 
     for (const field of requiredFields) {
-      const value = formData[field as keyof typeof formData];
-      if (!value || !value.toString().trim()) {
-        console.log(`Validation failed for field: ${field}, value:`, value);
+      if (!formData[field as keyof typeof formData].trim()) {
         onError(t("auth.fillAllFields") || "Please fill all fields");
         return false;
       }
@@ -97,28 +92,11 @@ const Signup = ({ onSuccess, onSwitchToLogin, onError, onClearError }: SignupPro
       setLoading(true);
 
       const { confirmPassword, ...payload } = formData;
-      
-      // Ensure all required fields are present and not empty
-      const finalPayload = {
-        firstName: payload.firstName?.trim() || '',
-        lastName: payload.lastName?.trim() || '',
-        email: payload.email?.trim() || '',
-        phone: payload.phone?.trim() || '',
-        password: payload.password || '',
-        roleId: ROLE_ID,
-      };
-      
-      // Debug: Log the payload being sent
-      console.log("Signup payload:", finalPayload);
-      console.log("Form data before processing:", formData);
-      
-      // Final validation before sending
-      if (!finalPayload.firstName || !finalPayload.lastName || !finalPayload.email || !finalPayload.phone || !finalPayload.password) {
-        onError("Please fill all required fields");
-        return;
-      }
 
-      const response = await apiClient.post(`/auth/register`, finalPayload);
+      const response = await apiClient.post(`/auth/register`, {
+        ...payload,
+        roleId: ROLE_ID,
+      });
 
       console.log("Signup successful:", response.data);
       onSuccess();
@@ -245,57 +223,27 @@ const Signup = ({ onSuccess, onSwitchToLogin, onError, onClearError }: SignupPro
           autoComplete="tel"
         />
 
-        <div className="relative">
-          <Input
-            type={showPassword ? "text" : "password"}
-            placeholder={t("auth.password") || "Password"}
-            value={formData.password}
-            onChange={(e) => handleInputChange("password", e.target.value)}
-            onKeyPress={handleKeyPress}
-            disabled={loading}
-            className="w-full pr-10"
-            autoComplete="new-password"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            disabled={loading}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label={showPassword ? "Hide password" : "Show password"}
-          >
-            {showPassword ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-          </button>
-        </div>
+        <Input
+          type="password"
+          placeholder={t("auth.password") || "Password"}
+          value={formData.password}
+          onChange={(e) => handleInputChange("password", e.target.value)}
+          onKeyPress={handleKeyPress}
+          disabled={loading}
+          className="w-full"
+          autoComplete="new-password"
+        />
 
-        <div className="relative">
-          <Input
-            type={showConfirmPassword ? "text" : "password"}
-            placeholder={t("auth.confirmPassword") || "Confirm Password"}
-            value={formData.confirmPassword}
-            onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-            onKeyPress={handleKeyPress}
-            disabled={loading}
-            className="w-full pr-10"
-            autoComplete="new-password"
-          />
-          <button
-            type="button"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            disabled={loading}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-          >
-            {showConfirmPassword ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-          </button>
-        </div>
+        <Input
+          type="password"
+          placeholder={t("auth.confirmPassword") || "Confirm Password"}
+          value={formData.confirmPassword}
+          onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+          onKeyPress={handleKeyPress}
+          disabled={loading}
+          className="w-full"
+          autoComplete="new-password"
+        />
 
           <Button
             type="submit"

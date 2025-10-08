@@ -8,7 +8,7 @@ import { DynamicDataProvider } from "./contexts/DynamicDataContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import NewsPage from "./pages/newsPages";
-import PoliticsNews from "./components/PoliticsNews"; // ✅ Import PoliticsNews component
+import PoliticsNews from "./components/PoliticsNews";
 import About from "./components/About";
 import Contact from "./components/Contact";
 import PrivacyPolicy from "./components/PrivacyPolicy";
