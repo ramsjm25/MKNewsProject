@@ -11,6 +11,22 @@ export default async function handler(req, res) {
     return;
   }
 
+  // Enhanced debugging
+  console.log(`[Proxy] Incoming request: ${req.method} ${req.url}`);
+  console.log(`[Proxy] Headers:`, req.headers);
+
+  // Health check endpoint
+  if (req.url === '/api/health' || req.url === '/api/proxy/health') {
+    res.status(200).json({ 
+      status: 'ok', 
+      message: 'Proxy is working',
+      timestamp: new Date().toISOString(),
+      method: req.method,
+      url: req.url
+    });
+    return;
+  }
+
   const baseUrl = 'https://phpstack-1520234-5847937.cloudwaysapps.com/api/v1';
 
   // Map known app endpoints to real backend endpoints
@@ -48,6 +64,7 @@ export default async function handler(req, res) {
     targetUrl = `${baseUrl}/e-newspapers${search}`;
   } else if (pathname.startsWith('/auth')) {
     targetUrl = `${baseUrl}${pathname}${search}`;
+    console.log(`[Proxy] Auth endpoint detected: ${pathname} -> ${targetUrl}`);
   } else if (pathname.startsWith('/news')) {
     targetUrl = `${baseUrl}${pathname}${search}`;
   } else if (pathname.startsWith('/api') || pathname === '' || pathname === '/') {
@@ -67,7 +84,8 @@ export default async function handler(req, res) {
 
   try {
     // Debug logging
-    console.log(`[Proxy] ${req.method} ${pathname} -> ${targetUrl}`);
+    console.log(`[Proxy] Processing: ${req.method} ${pathname} -> ${targetUrl}`);
+    console.log(`[Proxy] Request body:`, req.body);
     
     // Some backend endpoints expect POST with JSON instead of GET with query
     let forwardMethod = req.method;
@@ -125,9 +143,17 @@ export default async function handler(req, res) {
 
     const data = await response.json();
     console.log(`[Proxy] Response: ${response.status} for ${req.method} ${pathname}`);
+    console.log(`[Proxy] Response data:`, data);
     res.status(response.status).json(data);
   } catch (error) {
     console.error(`[Proxy] Error for ${req.method} ${pathname}:`, error);
-    res.status(500).json({ error: 'Proxy request failed', details: error.message });
+    console.error(`[Proxy] Error stack:`, error.stack);
+    res.status(500).json({ 
+      error: 'Proxy request failed', 
+      details: error.message,
+      path: pathname,
+      method: req.method,
+      targetUrl: targetUrl
+    });
   }
 }

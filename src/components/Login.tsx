@@ -6,6 +6,7 @@ import apiClient from '@/api/apiClient';
 import ForgotPassword from './ForgotPassword';
 import VerifyOTP from './VerifyOTP';
 import ResetPassword from './ResetPassword';
+import { Eye, EyeOff } from "lucide-react";
 
 interface LoginProps {
   onSuccess: (user: any) => void;
@@ -35,6 +36,7 @@ interface LoginResponse {
 const Login = ({ onSuccess, onSwitchToSignup, onError, onClearError }: LoginProps) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     emailOrPhone: "",
     password: "",
@@ -246,16 +248,31 @@ const Login = ({ onSuccess, onSwitchToSignup, onError, onClearError }: LoginProp
             autoComplete="username"
           />
 
-          <Input
-            type="password"
-            placeholder={t("auth.password") || "Password"}
-            value={formData.password}
-            onChange={(e) => handleInputChange("password", e.target.value)}
-            onKeyPress={handleKeyPress}
-            disabled={loading}
-            className="w-full"
-            autoComplete="current-password"
-          />
+          <div className="relative">
+            <Input
+              type={showPassword ? "text" : "password"}
+              placeholder={t("auth.password") || "Password"}
+              value={formData.password}
+              onChange={(e) => handleInputChange("password", e.target.value)}
+              onKeyPress={handleKeyPress}
+              disabled={loading}
+              className="w-full pr-10"
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              disabled={loading}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
 
           <Button
             type="submit"
