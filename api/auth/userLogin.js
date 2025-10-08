@@ -22,14 +22,25 @@ export default async function handler(req, res) {
   try {
     console.log(`[Auth] UserLogin request body:`, JSON.stringify(req.body, null, 2));
     console.log(`[Auth] UserLogin request headers:`, req.headers);
+    console.log(`[Auth] Raw request body type:`, typeof req.body);
+    console.log(`[Auth] Raw request body keys:`, Object.keys(req.body || {}));
     
     // Validate required fields
     const { emailOrPhone, password } = req.body;
     
+    console.log(`[Auth] Extracted fields:`, {
+      emailOrPhone: emailOrPhone,
+      password: password ? '[REDACTED]' : password,
+      emailOrPhoneType: typeof emailOrPhone,
+      passwordType: typeof password
+    });
+    
     if (!emailOrPhone || !password) {
       console.log(`[Auth] Missing required fields:`, {
         emailOrPhone: !!emailOrPhone,
-        password: !!password
+        password: !!password,
+        emailOrPhoneValue: emailOrPhone,
+        passwordValue: password ? '[REDACTED]' : password
       });
       
       res.status(400).json({
@@ -42,17 +53,40 @@ export default async function handler(req, res) {
       return;
     }
     
+    // Create a clean payload to send to backend
+    // Try multiple field name variations in case backend expects different names
+    const backendPayload = {
+      emailOrPhone: emailOrPhone.trim(),
+      email: emailOrPhone.trim(), // Some backends expect 'email' field
+      password: password
+    };
+    
+    console.log(`[Auth] Sending to backend:`, {
+      emailOrPhone: backendPayload.emailOrPhone,
+      email: backendPayload.email,
+      password: '[REDACTED]'
+    });
+    
     const response = await fetch(targetUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...req.headers
+        'Accept': 'application/json',
+        'User-Agent': 'Vercel-Proxy/1.0'
       },
-      body: JSON.stringify(req.body)
+      body: JSON.stringify(backendPayload)
     });
 
     const data = await response.json();
     console.log(`[Auth] UserLogin response: ${response.status}`);
+    console.log(`[Auth] Backend response data:`, JSON.stringify(data, null, 2));
+    
+    if (response.status !== 200) {
+      console.log(`[Auth] Backend error response:`, {
+        status: response.status,
+        data: data
+      });
+    }
     
     res.status(response.status).json(data);
   } catch (error) {
