@@ -54,16 +54,14 @@ export default async function handler(req, res) {
     }
     
     // Create a clean payload to send to backend
-    // Try multiple field name variations in case backend expects different names
+    // Backend only wants emailOrPhone, not email field
     const backendPayload = {
       emailOrPhone: emailOrPhone.trim(),
-      email: emailOrPhone.trim(), // Some backends expect 'email' field
       password: password
     };
     
     console.log(`[Auth] Sending to backend:`, {
       emailOrPhone: backendPayload.emailOrPhone,
-      email: backendPayload.email,
       password: '[REDACTED]'
     });
     

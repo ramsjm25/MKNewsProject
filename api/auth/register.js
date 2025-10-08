@@ -26,6 +26,15 @@ export default async function handler(req, res) {
     // Validate required fields before sending
     const { firstName, lastName, email, phone, password, roleId } = req.body;
     
+    console.log(`[Auth] Extracted fields:`, {
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      phone: phone,
+      password: password ? '[REDACTED]' : password,
+      roleId: roleId
+    });
+    
     if (!firstName || !lastName || !email || !phone || !password || !roleId) {
       console.log(`[Auth] Missing required fields:`, {
         firstName: !!firstName,
@@ -50,17 +59,45 @@ export default async function handler(req, res) {
       return;
     }
     
+    // Create a clean payload to send to backend
+    const backendPayload = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      password: password,
+      roleId: roleId
+    };
+    
+    console.log(`[Auth] Sending to backend:`, {
+      firstName: backendPayload.firstName,
+      lastName: backendPayload.lastName,
+      email: backendPayload.email,
+      phone: backendPayload.phone,
+      password: '[REDACTED]',
+      roleId: backendPayload.roleId
+    });
+    
     const response = await fetch(targetUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...req.headers
+        'Accept': 'application/json',
+        'User-Agent': 'Vercel-Proxy/1.0'
       },
-      body: JSON.stringify(req.body)
+      body: JSON.stringify(backendPayload)
     });
 
     const data = await response.json();
     console.log(`[Auth] Register response: ${response.status}`);
+    console.log(`[Auth] Backend response data:`, JSON.stringify(data, null, 2));
+    
+    if (response.status !== 200) {
+      console.log(`[Auth] Backend error response:`, {
+        status: response.status,
+        data: data
+      });
+    }
     
     res.status(response.status).json(data);
   } catch (error) {
